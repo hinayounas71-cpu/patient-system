@@ -411,7 +411,7 @@ else:
                 st.write(f"**[{status}]** {label} -> Computed Score: `{total}`")
             if all_passed:
                 st.success("All 4 Clinical & Escalation Unit Tests PASSED (100% Accuracy).")
-                       st.markdown("#### Live Database Security & ACL Penetration Test")
+        st.markdown("#### Live Database Security & ACL Penetration Test")
         if st.button("Simulate Unauthorized Attack (Test RLS & Immutability)"):
             st.warning("Running 3 live security attack simulations against Cloud Database...")
             # Test 1: Unauthenticated Read Attempt
