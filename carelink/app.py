@@ -365,7 +365,7 @@ else:
         if st.button("Logout"):
             logout()
     {"nurse": nurse_view, "doctor": doctor_view, "admin": admin_view}[me["role"]](sb, me)
-        if me["role"] == "admin":
+    if me["role"] == "admin":
         st.markdown("---")
         st.subheader("System Architecture, Database ERD & Automated Unit Tests")
         st.info("Two-Level ACL Active: Application Role Guard + PostgreSQL Row Level Security (RLS)")
