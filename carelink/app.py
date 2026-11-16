@@ -209,6 +209,7 @@ def doctor_view(sb, me):
             try:
                 sb.table("advice").insert({"patient_id": p["id"], "doctor_id": me["id"],
                                            "advice_text": text.strip()}).execute()
+                sb.table("alerts").update({"status": "ok"}).eq("patient_id", p["id"]).neq("status", "ok").execute()
                 st.success("Advice sent. The nurse can see it now.")
             except Exception:
                 st.error("Not allowed.")
