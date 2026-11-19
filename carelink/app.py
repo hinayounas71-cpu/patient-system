@@ -152,7 +152,10 @@ def generate_patient_pdf(patient, checkups_rows, advice_rows, staff_map, generat
     pdf.set_font("Arial", "I", 8)
     pdf.set_text_color(100, 116, 139)
     pdf.cell(0, 6, "Security Verification: Protected by PostgreSQL Row-Level Security (RLS) & Immutable Audit Trail.", ln=True, align="C")
-    return bytes(pdf.output(dest="S"))
+   out = pdf.output()
+    if isinstance(out, (bytes, bytearray)):
+        return bytes(out)
+    return out.encode("latin-1", "replace")
 
 
 # ---------- EXECUTIVE COMMAND CENTER (LIVE KPIS & CHARTS) ----------
