@@ -105,7 +105,6 @@ def generate_patient_pdf(patient, checkups_rows, advice_rows, staff_map, generat
     pdf.cell(0, 7, f"Report Timestamp (PKT): {dt.datetime.now(dt.timezone(dt.timedelta(hours=5))).strftime('%d %b %Y, %I:%M %p')}", ln=True)
     pdf.ln(5)
 
-    # Latest Vitals Table
     pdf.set_font("Arial", "B", 12)
     pdf.cell(0, 8, "Recent Clinical Checkups & NEWS2 Scores:", ln=True)
     pdf.set_font("Arial", "B", 9)
@@ -152,7 +151,8 @@ def generate_patient_pdf(patient, checkups_rows, advice_rows, staff_map, generat
     pdf.set_font("Arial", "I", 8)
     pdf.set_text_color(100, 116, 139)
     pdf.cell(0, 6, "Security Verification: Protected by PostgreSQL Row-Level Security (RLS) & Immutable Audit Trail.", ln=True, align="C")
-   out = pdf.output()
+
+    out = pdf.output()
     if isinstance(out, (bytes, bytearray)):
         return bytes(out)
     return out.encode("latin-1", "replace")
@@ -167,7 +167,6 @@ def render_executive_dashboard(sb, me):
     </div>
     """, unsafe_allow_html=True)
 
-    # Fetch live counts safely using service client for global telemetry metrics
     admin_sb = svc()
     all_patients = admin_sb.table("patients").select("id,full_name,ward,bed_no").execute().data or []
     open_alerts = admin_sb.table("alerts").select("id,status").in_("status", ["sent", "moved", "unanswered"]).execute().data or []
@@ -175,7 +174,6 @@ def render_executive_dashboard(sb, me):
     recent_checkups = admin_sb.table("checkups").select("patient_id,resp_rate,spo2,systolic_bp,pulse,total_score,is_unsafe,created_at").order("created_at", desc=True).limit(25).execute().data or []
     audit_count = len(admin_sb.table("audit_log").select("id").limit(500).execute().data or [])
 
-    # 1. Top 4 Live KPI Metric Cards
     k1, k2, k3, k4 = st.columns(4)
     k1.metric("Total Registered Patients", len(all_patients), "Active Wards")
     k2.metric("Active Critical Alerts", len(open_alerts), "NEWS2 Escalation" if open_alerts else "All Clear",
@@ -183,7 +181,6 @@ def render_executive_dashboard(sb, me):
     k3.metric("Active Clinical Staff", len(all_staff), "RBAC Verified")
     k4.metric("Immutable Audit Events", audit_count, "100% RLS Protected")
 
-    # 2. Interactive Plotly Charts
     with st.expander("📊 Live Clinical Analytics & Telemetry Charts (Expand / Collapse)", expanded=True):
         c1, c2 = st.columns(2)
         with c1:
@@ -327,7 +324,6 @@ def nurse_view(sb, me):
             else:
                 st.success(f"Saved. Safe (score {r.total}). No alert.")
 
-        # Official PDF Export Button for Nurse
         chk_rows = sb.table("checkups").select("*").eq("patient_id", p["id"]).order("created_at", desc=True).limit(10).execute().data
         adv_rows = sb.table("advice").select("*").eq("patient_id", p["id"]).order("created_at", desc=True).limit(5).execute().data
         pdf_bytes = generate_patient_pdf(p, chk_rows, adv_rows, staff_names(sb), me["full_name"])
@@ -425,7 +421,6 @@ def doctor_view(sb, me):
             fig_trend.update_layout(height=250, margin=dict(t=35, b=10, l=10, r=10))
             st.plotly_chart(fig_trend, use_container_width=True)
 
-        # Official PDF Export Button for Doctor
         chk_rows = sb.table("checkups").select("*").eq("patient_id", p["id"]).order("created_at", desc=True).limit(10).execute().data
         adv_rows = sb.table("advice").select("*").eq("patient_id", p["id"]).order("created_at", desc=True).limit(5).execute().data
         pdf_bytes = generate_patient_pdf(p, chk_rows, adv_rows, staff_names(sb), me["full_name"])
@@ -658,7 +653,6 @@ else:
         st.markdown("#### Live Database Security & ACL Penetration Test")
         if st.button("Simulate Unauthorized Attack (Test RLS & Immutability)"):
             st.warning("Running 3 live security attack simulations against Cloud Database...")
-            # Test 1: Unauthenticated Read Attempt
             try:
                 unauth_res = anon_client().table("patients").select("*").limit(1).execute()
                 if not unauth_res.data:
@@ -668,14 +662,12 @@ else:
             except Exception as e:
                 st.success(f"[BLOCKED] Attack 1 Denied by Cloud Firewall/RLS: {type(e).__name__}")
 
-            # Test 2: Audit Log Tampering (DELETE) Attempt
             try:
                 anon_client().table("audit_log").delete().neq("id", 0).execute()
                 st.success("[BLOCKED] Attack 2 (Audit Log Deletion): Blocked by Immutable Append-Only Policy.")
             except Exception as e:
                 st.success(f"[BLOCKED] Attack 2 (Audit Log Deletion): Rejected by Database ACL ({type(e).__name__}).")
 
-            # Test 3: Checkup Record Tampering (UPDATE) Attempt
             try:
                 anon_client().table("checkups").update({"spo2": 99}).neq("id", 0).execute()
                 st.success("[BLOCKED] Attack 3 (Medical Checkup Alteration): Blocked by Database Write-Once Policy.")
